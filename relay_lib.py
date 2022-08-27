@@ -1,8 +1,7 @@
 import os
 
-RELAY_COMMAND_PATH = "./USBLRB 0 "
-
 class Relay:
+    RELAY_COMMAND_PATH = "./USBLRB 0 "
     curr_state = 0
     # Relay pins
     VBUS = 1

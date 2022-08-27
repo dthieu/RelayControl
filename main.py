@@ -7,16 +7,23 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow
 )
 from PyQt5 import QtCore
+# Load UI
 from PyQt5.uic import loadUi
 from main_window_ui import Ui_MainWindow
-from functools import partial
+from setting_windows_ui import Ui_windowSetting
 from relay_lib import Relay
 from multiplexer_lib import Multiplexer
 
 
-class Window(QMainWindow, Ui_MainWindow):
+class Window_Setting(Ui_windowSetting, QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setupUi(self)
+
+class Window(Ui_MainWindow, QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.settingWin = Window_Setting()
         self.setFixedSize(485, 705)
         self.setupUi(self)
         self.loadRelayLabel()
@@ -39,6 +46,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.connectCommonFunc()
         self.connectRelayPins()
         self.connectMUXMode()
+        self.menuExit.triggered.connect(self.exit)
+        self.menuSetting.triggered.connect(self.show_setting)
 
     def connectCommonMode(self):
         self.rbNone.toggled.connect(self.checkedNone)
@@ -208,30 +217,15 @@ class Window(QMainWindow, Ui_MainWindow):
     
     def log(self, message):
         self.txtLog.appendPlainText(message)
+    
+    def exit(self):
+        sys.exit()
+    
+    def show_setting(self):
+        self.settingWin.show()
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = Window()
     win.show()
     sys.exit(app.exec())
-
-
-# ===================================================
-# from functools import partial
-
-# def calluser(name):
-#     print name
-
-# def Qbutton():
-#     button = QtGui.QPushButton("button",widget)
-#     name = "user"
-#     button.setGeometry(100,100, 60, 35)
-#     button.clicked.connect(partial(calluser,name))
-
-ICON_RED_LED = "./assets/icon/led-red.png"
-ICON_GREEN_LED = "./assets/icon/green-led.png"
-
-# The icon can activated like this:
-# self.ui.labelStatusFan1.setPixmap(QtGui.QPixmap(ICON_RED_LED))
-# Also, by using signals, the icon can be activated based on some condition:
-# self.pixmap_signal_fan1.emit(ICON_RED_LED if fans_rpm[0] == 0 or fans_voltage[0] == 0 else ICON_GREEN_LED)

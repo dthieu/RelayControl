@@ -23,11 +23,23 @@ class Window_Setting(Ui_windowSetting, QMainWindow):
         self.connectSignalsSlots()
 
     def connectSignalsSlots(self):
-        self.btnMUXPath.clicked.connect(self.choosePath)
-        self.btnRelayPath.clicked.connect(self.choosePath)
+        self.btnRelayPath.clicked.connect(self.choosePathRelay)
+        self.btnMUXPath.clicked.connect(self.choosePathMUX)
 
-    def choosePath(self):
-        print(self.getOpenFilesAndDirs())
+    def choosePathRelay(self):
+        path = self.getOpenFilesAndDirs()[0]
+        try:
+            self.txtRelayPath.setText(path)
+        except FileNotFoundError as err:
+            print("Not choose file yet. Error ", err)
+    
+    def choosePathMUX(self):
+        path = self.getOpenFilesAndDirs()[0]
+        try:
+            self.txtMUXPath.setText(path)
+        except FileNotFoundError as err:
+            print("Not choose file yet. Error ", err)
+
 
     def getOpenFilesAndDirs(self, parent=None, caption='', directory='', 
                         filter='', initialFilter='', options=None):

@@ -1,12 +1,15 @@
 # .\relayControl\Scripts> .\qt5-tools.exe designer
 # .\Scripts\pyuic5.exe -o main_window_ui.py relay_control.ui
 
+import os
 import sys
 from turtle import update
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QFileDialog,
-    QLineEdit, QDialog, QListView, QStackedWidget
+    QLineEdit, QDialog, QListView, QStackedWidget, 
+    QGraphicsPixmapItem, QGraphicsScene
 )
+from PyQt5.QtGui import QPixmap
 from PyQt5 import QtCore
 # Load UI
 from PyQt5.uic import loadUi
@@ -88,7 +91,7 @@ class Window(Ui_MainWindow, QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.settingWin = Window_Setting()
-        self.setFixedSize(485, 705)
+        #self.setFixedSize(485, 705)
         self.setupUi(self)
         self.loadRelayLabel()
         self.connectSignalsSlots()
@@ -112,6 +115,40 @@ class Window(Ui_MainWindow, QMainWindow):
         self.connectMUXMode()
         self.menuExit.triggered.connect(self.exit)
         self.menuSetting.triggered.connect(self.show_setting)
+        
+        # GMVCU function
+        self.btnMUXFlashMode.clicked.connect(lambda: self.switch_mux("flash"))
+        self.btnMUXTestingMode.clicked.connect(lambda: self.switch_mux("normal"))
+
+
+    def switch_mux(self, mode):
+        if mode == "flash":
+            self.log("[GMVCU][MUX] Switch to flashing mode")
+            image_path = r".\resource\mode1.png"
+            self.myMUX.switch_to_flash_mode_gmvcu()
+        elif mode == "normal":
+            self.log("[GMVCU][MUX] Switch to testing / ssh mode")
+            image_path = r".\resource\mode2.png"
+            self.myMUX.switch_to_normal_mode_gmvcu()
+        else:
+            self.log("Input mode is invalid!")
+            return
+        # Show MUX images :) 
+        if os.path.isfile(image_path):
+            scene = QGraphicsScene(self)
+            pixmap = QPixmap(image_path)
+            item = QGraphicsPixmapItem(pixmap)
+            scene.addItem(item)
+            self.graphicsViewMUX.setScene(scene)
+
+            # # Fit image in graphic view but image have been broken a litle bit :(
+            # # 3 lines below is apply with big size image
+            # img_aspect_ratio =  int(pixmap.size().width()) / pixmap.size().height() 
+            # width = self.graphicsViewMUX.size().width()
+            # self.graphicsViewMUX.setFixedHeight( int(width / img_aspect_ratio))
+            self.graphicsViewMUX.fitInView(scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        else:
+            self.log("[GMVCU][MUX] Wrong image path!")
 
     def connectCommonMode(self):
         self.rbNone.toggled.connect(self.checkedNone)

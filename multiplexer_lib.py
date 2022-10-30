@@ -15,3 +15,4 @@ class Multiplexer:
     
     def switch_to_normal_mode_gmvcu(self):
         print("USBswitchCmd 1 -# 1")
+        print(f"MUX PATH = {self.MUX_COMMAND_PATH}")

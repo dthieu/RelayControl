@@ -17,7 +17,10 @@ from main_window_ui import Ui_MainWindow
 from setting_windows_ui import Ui_windowSetting
 from relay_lib import Relay
 from multiplexer_lib import Multiplexer
+import xml.etree.ElementTree as ET # Read config from xml file
 
+# Global variable
+CONFIG_FILE_PATH = r"./CONFIG.xml"
 
 class Window_Setting(Ui_windowSetting, QMainWindow):
     def __init__(self, parent=None):
@@ -93,11 +96,25 @@ class Window(Ui_MainWindow, QMainWindow):
         self.settingWin = Window_Setting()
         #self.setFixedSize(485, 705)
         self.setupUi(self)
-        self.loadRelayLabel()
-        self.connectSignalsSlots()
         self.myRelay = Relay()
         self.myMUX = Multiplexer()
+        self.get_config(CONFIG_FILE_PATH)
+        self.connectSignalsSlots()
+        self.loadRelayLabel()
         self.txtCurrentState.setText(str(self.myRelay.curr_state))
+
+    def get_config(self, config_file):
+        if os.path.isfile(config_file):
+            try:
+                tree = ET.parse(config_file) 
+                root = tree.getroot()
+                self.myMUX.MUX_COMMAND_PATH = root.find("mux").find("bin_path").text
+                self.myRelay.RELAY_COMMAND_PATH = root.find("relay").find("bin_path").text
+            except Exception as err:
+                print(f"Error: {err}")
+                print("An error occurs! Please check the path and content of config file.")
+        else:
+            print("Input config file is invalid! It's not a file!")
 
     def loadRelayLabel(self):
         self.lblNum1.setText("VBUS")

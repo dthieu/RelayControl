@@ -1,12 +1,15 @@
 import os
 
 class Multiplexer:
-    MUX_COMMAND_PATH = "USBswitchCmd "
-    curr_state = 0
+    def __init__(self) -> None:    
+        self.mux_command_path = "USBswitchCmd "
     
     def switch_to_normal_mode(self):
         print("Normal mode")
     
+    def switch_to_flashing_mode(self):
+        print("Flashing mode")
+
     def swith_to_DLT_mode(self):
         print("DLT mode")
     
@@ -15,4 +18,4 @@ class Multiplexer:
     
     def switch_to_normal_mode_gmvcu(self):
         print("USBswitchCmd 1 -# 1")
-        print(f"MUX PATH = {self.MUX_COMMAND_PATH}")
+

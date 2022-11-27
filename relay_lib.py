@@ -1,30 +1,35 @@
 import os
 
 class Relay:
-    RELAY_COMMAND_PATH = "./USBLRB 0 "
-    curr_state = 0
-    # Relay pins
-    VBUS = 1
-    WD_OFF = 3
-    MOD_0 = 4
-    IGN = 6
-    ACC = 7
-    BAT = 8
+    MAX_PIN = 8
+
+    def __init__(self) -> None:
+        self.relay_command_path = "./USBLRB 0 "
+        self.curr_state = 0
+        self.pins = { f'pin{i}' : i for i in range(1, self.MAX_PIN + 1)}
+
+    def print_config(self) -> None:
+        print("========= RELAY CONFIG =========")
+        print(f"|* Relay's path: {self.relay_command_path}")
+        print(f"|* Max pins: {self.MAX_PIN}")
+        print(f"|* Pins detail: {self.pins}")
+        print(f"|* Current state: {bin(self.curr_state)[2:]}")
+        print("============= END ==============")
 
     def debug_log_curr_state(self):
         print(f"Current state: {self.curr_state} ({bin(self.curr_state)[2:]})")
 
     # Set bit of relay_pos to 1
-    def setRelayPin1(self, relay_pos):
+    def enablePin(self, relay_pos):
         self.curr_state = self.curr_state | (1 << (relay_pos - 1))
-        # relay_command = RELAY_COMMAND_PATH + str(self.curr_state)
+        # relay_command = self.relay_command_path + str(self.curr_state)
         # os.system(relay_command)
         self.debug_log_curr_state()
     
     # Set bit of relay_pos to 0
-    def setRelayPin0(self, relay_pos):
+    def disablePin(self, relay_pos):
         self.curr_state = self.curr_state & ~ (1 << (relay_pos - 1))
-        # relay_command = RELAY_COMMAND_PATH + str(self.curr_state)
+        # relay_command = self.relay_command_path + str(self.curr_state)
         # os.system(relay_command)
         self.debug_log_curr_state()
 
@@ -34,86 +39,40 @@ class Relay:
         Input:
         * n: number
         * k: kth bit
+        
         Output:
         * True: set
         * False: not set yet
         '''
         return self.curr_state & (1 << (kth_bit - 1))
     
-    def turnOffAllRelay(self):
+    def disableAllPin(self):
         print("Turn off all relay pins")
         self.curr_state = 0
         # relay_command = RELAY_COMMAND_PATH + str(self.curr_state)
         # os.system(relay_command)
         self.debug_log_curr_state()
         
-    def connectBAT(self):
-        print("Connect BAT")
-        if not self.isKthBitSet(self.BAT):
-            self.setRelayPin1(self.BAT)
+    def connectPin(self, pin):
+        print(f"Connect pin{pin}")
+        try:
+            if not self.isKthBitSet(pin):
+                self.enablePin(pin)
+            else: pass
+        except TypeError as err:
+            print(f"Input pin is invalid! Error: {err}")
     
-    def connectVBUS(self):
-        print("Connect VBUS")
-        if not self.isKthBitSet(self.VBUS):
-            self.setRelayPin1(self.VBUS)
+    def disconnectPin(self, pin):
+        print(f"Disconnect pin{pin}")
+        try:
+            if self.isKthBitSet(pin):
+                self.disablePin(pin)
+            else: pass
+        except TypeError as err:
+            print(f"Input pin is invalid! Error: {err}")
 
-    def connectMOD_0(self):
-        print("Connect MOD_0")
-        if not self.isKthBitSet(self.MOD_0):
-            self.setRelayPin1(self.MOD_0)
-
-    def connectACC(self):
-        print("Connect ACC")
-        if not self.isKthBitSet(self.ACC):
-            self.setRelayPin1(self.ACC)
-    
-    def connectIGN(self):
-        print("Connect IGN")
-        if not self.isKthBitSet(self.IGN):
-            self.setRelayPin1(self.IGN)
-    
-    def connectACC_IGN(self):
-        print("Connect ACC IGN")
-        self.connectACC()
-        self.connectIGN()
-
-    def connectWD_OFF(self):
-        print("Connect WD_OFF")
-        if not self.isKthBitSet(self.WD_OFF):
-            self.setRelayPin1(self.WD_OFF)
-
-    def disconnectVBUS(self):
-        print("Disconnect VBUS")
-        if self.isKthBitSet(self.VBUS):
-            self.setRelayPin0(self.VBUS)
-    
-    def disconnectMOD_0(self):
-        print("Disconnect MOD_0")
-        if self.isKthBitSet(self.MOD_0):
-            self.setRelayPin0(self.MOD_0)
-
-    def disconnectBAT(self):
-        print("Disconnect BAT")
-        if self.isKthBitSet(self.BAT):
-            self.setRelayPin0(self.BAT)
-    
-    def disconnectACC(self):
-        print("Disconnect ACC")
-        if self.isKthBitSet(self.ACC):
-            self.setRelayPin0(self.ACC)
-    
-    def disconnectIGN(self):
-        print("Disconnect IGN")
-        if self.isKthBitSet(self.IGN):
-            self.setRelayPin0(self.IGN)
-
-    def disconnectBAT_ACC_IGN(self):
-        print("Disconnect BAT ACC IGN")
-        self.disconnectBAT()
-        self.disconnectACC()
-        self.disconnectIGN()
-
-    def disconnectWD_OFF(self):
-        print("Disconnect WD_OFF")
-        if self.isKthBitSet(self.WD_OFF):
-            self.setRelayPin0(self.WD_OFF)
+if __name__ == '__main__':
+    myrl = Relay()
+    print(myrl.print_config())
+    for i in range(1, Relay.MAX_PIN+1):
+        myrl.connectPin(Relay.MAX_PIN + 1 - i)

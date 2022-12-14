@@ -17,7 +17,9 @@
 	</mux>
 	
 	<pps>
-		<COM>12</COM>
-		<chanel>2</chanel>
+		<COM_port>12</COM_port>
+		<channel>2</channel>
+		<min_volt>5</min_volt>
+		<max_volt>19</max_volt>
 	</pps>
 </hw_control>

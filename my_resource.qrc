@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="pps">
+    <file>resource/pps.png</file>
+    <file>resource/restart_power.png</file>
+  </qresource>
+</RCC>

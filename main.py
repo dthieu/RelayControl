@@ -1,7 +1,10 @@
 # .\relayControl\Scripts> .\qt5-tools.exe designer
 # .\Scripts\pyuic5.exe -o main_window_ui.py relay_control.ui
+# pyrcc5.exe my_resource.qrc -o my_resource_rc.py
+
 import os
 import sys
+import time
 
 from PyQt5.QtWidgets import (
 	QApplication, QMainWindow, QFileDialog,
@@ -17,10 +20,13 @@ from main_window_ui import Ui_MainWindow
 from setting_windows_ui import Ui_windowSetting
 from relay_lib import Relay
 from multiplexer_lib import Multiplexer
+from pps_lib import PPS
 import xml.etree.ElementTree as ET # Read config from xml file
 
 # Global variable
 CONFIG_FILE_PATH = r"./CONFIG.xml"
+RED_BACKGROUND = "background-color: rgb(255, 0, 0);"
+GREEN_BACKGROUND = "background-color: rgb(0, 170, 0);"
 
 class Window_Setting(Ui_windowSetting, QMainWindow):
 	def __init__(self, parent=None):
@@ -97,6 +103,7 @@ class Window(Ui_MainWindow, QMainWindow):
 		self.setupUi(self)
 		self.myRelay = Relay()
 		self.myMUX = Multiplexer()
+		self.myPPS = PPS()
 		self.get_config(CONFIG_FILE_PATH)
 		self.connectSignalsSlots()
 		self.txtCurrentState.setText(str(self.myRelay.curr_state))
@@ -124,6 +131,17 @@ class Window(Ui_MainWindow, QMainWindow):
 					if relay_labels[f'pin_{i}'] != "None" and relay_labels[f'pin_{i}'] != "":
 						lable_pin_dic[i].setText(relay_labels[f'pin_{i}'])
 					else: pass
+				# Set properties for pps
+				self.myPPS.set_com_port(root.find('pps').find('COM_port').text.strip())
+				self.myPPS.set_channel(root.find('pps').find('channel').text.strip())
+				if self.myPPS.get_channel() == '1':
+					self.btnChannel1.setStyleSheet(GREEN_BACKGROUND)
+				elif self.myPPS.get_channel() == '2':
+					self.btnChannel2.setStyleSheet(GREEN_BACKGROUND)
+				else: pass
+				self.txtSetChannel.setText(self.myPPS.get_channel())
+				self.txtSetCOMport.setText(self.myPPS.get_com_port())
+
 			except Exception as err:
 				print(f"Error: {err}")
 				print("An error occurs! Please check the path and content of config file.")
@@ -136,13 +154,98 @@ class Window(Ui_MainWindow, QMainWindow):
 		self.menuExit.triggered.connect(self.exit)
 
 		self.menuSetting.triggered.connect(self.show_setting)
-		
-		# GMVCU function
+
 		self.btnMUXFlashMode.clicked.connect(lambda: self.switch_mux("flash"))
 		self.btnMUXTestingMode.clicked.connect(lambda: self.switch_mux("normal"))
 
+		# pps
+		self.btnGetVol_c1.clicked.connect(self.pps_get_voltage_c1)
+		self.btnGetVol_c2.clicked.connect(self.pps_get_voltage_c2)
+		self.btnGetAmpere_c1.clicked.connect(self.pps_get_ampere_c1)
+		self.btnSetCOMport.clicked.connect(self.pps_set_com_port)
+		self.btnSetChannel.clicked.connect(self.pps_set_channel)
+		self.btnSetVol_c1.clicked.connect(lambda: self.pps_set_voltage('1'))
+		self.btnSetVol_c2.clicked.connect(lambda: self.pps_set_voltage('2'))
+		self.btnChannel1.clicked.connect(lambda: self.pps_change_channel_to('1'))
+		self.btnChannel2.clicked.connect(lambda: self.pps_change_channel_to('2'))
+		self.btnRestartTarget.clicked.connect(self.restart_target)
+	
+	def restart_target(self):
+		self.log("[pps] Restart target...")
+		self.myPPS.set_volt_idx(0)
+		time.sleep(3)
+		self.myPPS.set_volt_idx(12)
+		self.log("[pps] Target has been restarted!")
 
-	def switch_mux(self, mode):
+	def pps_set_voltage(self, channel: str):
+		i_volt = self.txtSetVol.text().strip()
+
+		if i_volt != "" and i_volt.isdigit():
+			self.myPPS.set_volt_idx(float(i_volt))
+			if channel == '1':
+				self.txtdisplayVolt_c1.setText(str(float(i_volt)))
+			elif channel == '2':
+				self.txtdisplayVolt_c2.setText(str(float(i_volt)))
+			else: pass
+			self.log(f"[pps] Voltage of channel {channel} has been set {self.myPPS.get_volt_idx()}")
+		else:
+			self.log(f"[pps] Invalid input! {i_volt}")
+
+	def pps_get_voltage_c1(self):
+		curr_volt = str(self.myPPS.get_volt_idx())
+		self.txtdisplayVolt_c1.setText(curr_volt)
+		self.log(f"[pps] Voltage of Channel 1 is {curr_volt}")
+	
+	def pps_get_voltage_c2(self):
+		curr_volt = str(self.myPPS.get_volt_idx())
+		self.txtdisplayVolt_c2.setText(curr_volt)
+		self.log(f"[pps] Voltage of Channel 2 is {curr_volt}")
+
+	def pps_get_ampere_c1(self):
+		curr = str(self.myPPS.get_curr_idx())
+		self.txtdisplayAmpere_c1.setText(curr)
+		self.log(f"[pps] Ampere of Channel 1 is {curr}")
+	
+	def pps_get_ampere_c2(self):
+		curr = str(self.myPPS.get_curr_idx())
+		self.txtdisplayAmpere_c2.setText(curr)
+		self.log(f"[pps] Ampere of Channel 2 is {curr}")
+
+	def pps_set_channel(self):
+		i_channel = self.txtSetChannel.text().strip()
+
+		if i_channel != "" and i_channel.isdigit():
+			if i_channel == '1' or i_channel == '2' :
+				self.pps_change_channel_to(i_channel)
+				self.log(f"[pps] Channel has been set {self.myPPS.get_channel()}")
+			else:
+				self.log("[pps] Invalid channel! Channel 1 and 2 are supported!")
+		else:
+			self.log(f"[pps] Invalid input channel! {i_channel}")
+
+	def pps_set_com_port(self):
+		
+		i_com_port = self.txtSetCOMport.text().strip()
+		
+		if i_com_port != "" and i_com_port.isdigit():
+			self.myPPS.set_com_port(i_com_port)
+			self.log(f"[pps] COM port has been set {self.myPPS.get_com_port()}")
+		else:
+			self.log(f"[pps] Invalid input! {i_com_port}")
+	
+	def pps_change_channel_to(self, channel: str):
+		if channel == '1':
+			self.btnChannel2.setStyleSheet(RED_BACKGROUND)
+			self.btnChannel1.setStyleSheet(GREEN_BACKGROUND)
+			self.myPPS.set_channel('1')
+		elif channel == '2':
+			self.btnChannel1.setStyleSheet(RED_BACKGROUND)
+			self.btnChannel2.setStyleSheet(GREEN_BACKGROUND)
+			self.myPPS.set_channel('2')
+		else: pass
+		self.myPPS.get_info()
+
+	def switch_mux(self, mode: str):
 		if mode == "flash":
 			self.log("[GMVCU][MUX] Switch to flashing mode")
 			image_path = r".\resource\mode1.png"
@@ -191,7 +294,7 @@ class Window(Ui_MainWindow, QMainWindow):
 			self.log("Value of current state is invalid! \
 				accept number only and valid range is [0, 255]). Detail error: " + str(err))
 	
-	def pinStateChanged(self, state, pin):
+	def pinStateChanged(self, state, pin: int):
 		lable_pin_dic = {
 					1: self.lblNum1, 2: self.lblNum2, 3: self.lblNum3, 4: self.lblNum4,
 				   	5: self.lblNum5, 6: self.lblNum6, 7: self.lblNum7, 8: self.lblNum8 
@@ -217,7 +320,7 @@ class Window(Ui_MainWindow, QMainWindow):
 		self.cb7.setChecked(False)
 		self.cb8.setChecked(False)
 	
-	def log(self, message):
+	def log(self, message: str):
 		self.txtLog.appendPlainText(message)
 	
 	def exit(self):
@@ -231,3 +334,6 @@ if __name__ == "__main__":
 	win = Window()
 	win.show()
 	sys.exit(app.exec())
+
+# green: background-color: rgb(0, 170, 0);
+# TODO: 2 channel sẽ có issue là sẽ lấy giá trị channel kia gán cho channel này... hơi lộn xộn!

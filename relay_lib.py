@@ -20,21 +20,21 @@ class Relay:
         print(f"Current state: {self.curr_state} ({bin(self.curr_state)[2:]})")
 
     # Set bit of relay_pos to 1
-    def enablePin(self, relay_pos):
+    def enablePin(self, relay_pos: int):
         self.curr_state = self.curr_state | (1 << (relay_pos - 1))
         # relay_command = self.relay_command_path + str(self.curr_state)
         # os.system(relay_command)
         self.debug_log_curr_state()
     
     # Set bit of relay_pos to 0
-    def disablePin(self, relay_pos):
+    def disablePin(self, relay_pos: int):
         self.curr_state = self.curr_state & ~ (1 << (relay_pos - 1))
         # relay_command = self.relay_command_path + str(self.curr_state)
         # os.system(relay_command)
         self.debug_log_curr_state()
 
     # Given a number curr_state, check if the Kth bit of curr_state is set or not.
-    def isKthBitSet(self, kth_bit):
+    def isKthBitSet(self, kth_bit: int):
         '''
         Input:
         * n: number
@@ -53,7 +53,7 @@ class Relay:
         # os.system(relay_command)
         self.debug_log_curr_state()
         
-    def connectPin(self, pin):
+    def connectPin(self, pin: int):
         print(f"Connect pin{pin}")
         try:
             if not self.isKthBitSet(pin):
@@ -62,7 +62,7 @@ class Relay:
         except TypeError as err:
             print(f"Input pin is invalid! Error: {err}")
     
-    def disconnectPin(self, pin):
+    def disconnectPin(self, pin: int):
         print(f"Disconnect pin{pin}")
         try:
             if self.isKthBitSet(pin):
